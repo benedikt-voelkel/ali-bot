@@ -1,0 +1,69 @@
+---
+name: Apply requested async label
+
+'on':
+  workflow_call:
+
+permissions:
+  pull-requests: write   # to update labels
+
+jobs:
+  apply-label:
+    name: Apply label
+    runs-on: ubuntu-latest
+    if: ${{ github.event.issue.pull_request &&
+            startsWith('+async-label', github.event.comment.body) }}
+
+    steps:
+      - name: Install prerequisites
+        run: python3 -m pip install --user pygithub
+
+      - name: Parse comment to find label name
+        shell: python
+        env:
+          comment: ${{ github.event.comment.body }}
+          requester: ${{ github.event.comment.user.login }}
+          repo: ${{ github.event.repository.full_name }}
+          pr: ${{ github.event.issue.pull_request.number }}
+          token: ${{ github.token }}
+        run: |
+          import re
+          import os
+          import github
+
+          match = re.match(r'\+async-label\s+(.+)', os.environ['comment'])
+          assert match, f'could not parse comment: {os.environ["comment"]!r}'
+          labels = [label.strip() for label in match.group(1).split(',')]
+
+          repo = github.Github(os.environ['token']).get_repo(os.environ['repo'])
+          pr = repo.get_pull(os.environ['pr'])
+
+          # Since changing the labels may change which branches this PR is
+          # merged into, stay on the safe side and dismiss any approvals.
+          for review in pr.get_reviews():
+              if review.state == 'APPROVED':
+                  review.dismiss('Labels updated; please review again.')
+
+          possible_labels = {label.name: label for label in repo.get_labels()}
+          add_labels, invalid_labels = [], []
+          for label_name in labels:
+              delete = label_name.startswith('!')
+              label_name = label_name.lstrip('!')
+              try:
+                  label = possible_labels[label_name]
+              except KeyError:
+                  print(f'::warning::Ignoring unknown label {label_name!r}')
+                  invalid_labels.append(label_name)
+                  continue
+              if delete:
+                  pr.remove_from_labels(label)
+              else:
+                  add_labels.append(label)
+
+          pr.add_to_labels(*add_labels)
+
+          if invalid_labels:
+              pr.create_issue_comment(
+                  f'Hi @{os.environ["requester"]}, the following label names '
+                  f'could not be recognised: {", ".join(invalid_labels)}'
+              )
