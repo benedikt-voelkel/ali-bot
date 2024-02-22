@@ -1,0 +1,49 @@
+---
+name: Collect and print async labels
+
+'on':
+  pull_request:
+    types:
+      - opened
+      - reopened
+
+jobs:
+  collect_labels:
+    runs-on: ubuntu-latest
+    outputs:
+      labels: ${{ steps.get_labels.outputs.labels }}
+    steps:
+      - name: Get Labels
+        id: get_labels
+        run: |
+          labels=$(jq '.jobs[].labels | select(.!=null)' $GITHUB_EVENT_PATH | jq -r 'keys[] | select(startswith("async-"))')
+          run: echo "ASYNC_LABELS=$labels" >> "$GITHUB_OUTPUT"
+
+  print_labels:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Collect labels
+        id: collect_labels
+        run: |
+          labels=$(jq '.jobs[].labels | select(.!=null)' $GITHUB_EVENT_PATH | jq -r 'keys[] | select(startswith("async-"))')
+          echo "ASYNC_LABELS=$labels" >> "$GITHUB_OUTPUT"
+
+      - name: Add Comment to Issue
+        uses: actions/github-script@v7
+        env:
+          ASYNC_LABELS: ${{ steps.collect_labels.outputs.ASYNC_LABELS }}
+        with:
+          script: |
+            const { ASYNC_LABELS } = process.env
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '**The following async labels are available:**
+                ${ASYNC_LABELS.join('\n')}
+                To request adding or removing such labels, add a comment such as
+                ```
+                +async-label <async-label-1> <async-label2> !<async-label3>
+                ```
+                The "!" marks a label to be removed.'                '
+            })
