@@ -1,0 +1,24 @@
+---
+name: Collect and print async labels
+
+'on':
+  pull_request:
+    types:
+      - opened
+      - reopened
+
+jobs:
+  print-labels:
+    runs-on: ubuntu-latest
+    name: Print labels
+    steps:
+      - name: Collect labels
+        env:
+          GH_TOKEN: ${{ github.token }}
+          nr: ${{ github.event.pull_request.number }}
+
+        id: collect_labels
+        run: |
+          labels="$(gh label list --jq '.[].name | select(startswith("async-"))')"
+          body_text="The following labels are available: ${labels}"
+          gh pr comment "${nr}" --body "HELLO"
