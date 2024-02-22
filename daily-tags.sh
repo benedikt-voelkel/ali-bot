@@ -45,6 +45,9 @@ EOF
 # building O2Physics (which pulls in O2 as well).
 main_pkg=${PACKAGES%% *}
 # Check for required variables
+
+
+
 : "${PACKAGES:?}" "${main_pkg:?}" "${NODE_NAME:?}"
 : "${ALIDIST_SLUG:=alisw/alidist@master}" "${DEFAULTS:=release}"
 
