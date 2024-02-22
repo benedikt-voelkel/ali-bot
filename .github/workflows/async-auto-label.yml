@@ -2,7 +2,10 @@
 name: Apply requested async label
 
 'on':
-  workflow_call:
+  issue_comment:
+    types:
+      - created
+      - edited
 
 permissions:
   pull-requests: write   # to update labels
@@ -26,44 +29,64 @@ jobs:
           repo: ${{ github.event.repository.full_name }}
           pr: ${{ github.event.issue.pull_request.number }}
           token: ${{ github.token }}
+          association: ${{ github.event.comment.author_association }}
         run: |
           import re
           import os
           import github
 
-          match = re.match(r'\+async-label\s+(.+)', os.environ['comment'])
-          assert match, f'could not parse comment: {os.environ["comment"]!r}'
-          labels = [label.strip() for label in match.group(1).split(',')]
-
+          accepted_associations = ['COLLABORATOR', 'CONTRIBUTOR', 'MEMBER', 'OWNER']
           repo = github.Github(os.environ['token']).get_repo(os.environ['repo'])
           pr = repo.get_pull(os.environ['pr'])
+          requester = os.environ['requester']
 
-          # Since changing the labels may change which branches this PR is
-          # merged into, stay on the safe side and dismiss any approvals.
-          for review in pr.get_reviews():
-              if review.state == 'APPROVED':
-                  review.dismiss('Labels updated; please review again.')
+          def modify_labels():
 
-          possible_labels = {label.name: label for label in repo.get_labels()}
-          add_labels, invalid_labels = [], []
-          for label_name in labels:
-              delete = label_name.startswith('!')
-              label_name = label_name.lstrip('!')
-              try:
-                  label = possible_labels[label_name]
-              except KeyError:
-                  print(f'::warning::Ignoring unknown label {label_name!r}')
-                  invalid_labels.append(label_name)
-                  continue
-              if delete:
-                  pr.remove_from_labels(label)
-              else:
-                  add_labels.append(label)
+            match = re.match(r'\+label-async-\s+(.+)', os.environ['comment'])
+            assert match, f'could not parse comment: {os.environ["comment"]!r}'
+            labels = [re.sub('^' + re.escape('+label-'), '', label.strip()) for label in match.group(1).split(',')]
+            labels.extend([re.sub('^' + re.escape('!+label-'), '!', label.strip()) for label in match.group(1).split(',')])
 
-          pr.add_to_labels(*add_labels)
+            # Since changing the labels may change which branches this PR is
+            # merged into, stay on the safe side and dismiss any approvals.
+            for review in pr.get_reviews():
+                if review.state == 'APPROVED':
+                    review.dismiss('Labels updated; please review again.')
 
-          if invalid_labels:
-              pr.create_issue_comment(
-                  f'Hi @{os.environ["requester"]}, the following label names '
-                  f'could not be recognised: {", ".join(invalid_labels)}'
-              )
+            possible_labels = {label.name: label for label in repo.get_labels()}
+            add_labels, invalid_labels = [], []
+            for label_name in labels:
+                delete = label_name.startswith('!')
+                label_name = label_name.lstrip('!')
+                try:
+                    label = possible_labels[label_name]
+                except KeyError:
+                    print(f'::warning::Ignoring unknown label {label_name!r}')
+                    invalid_labels.append(label_name)
+                    continue
+                if delete:
+                    pr.remove_from_labels(label)
+                else:
+                    add_labels.append(label)
+
+            pr.add_to_labels(*add_labels)
+
+            if invalid_labels:
+                pr.create_issue_comment(
+                    f'Hi @{requester}, the following label names '
+                    f'could not be recognised: {", ".join(invalid_labels)}'
+                )
+
+          if os.environ['association'] in accepted_associations:
+            modify_labels()
+
+          else:
+            pr.create_issue_comment(
+                f'Hi @{requester}, due to your association, '
+                 'labels are not added automatically. '
+                 'Probably, this is your first contribution. '
+                 'Please contact one of the reviewers or '
+                 'code owners.'
+            )
+
+
