@@ -42,6 +42,9 @@ EOF
 # PACKAGES contains whitespace-separated package names to tag. Only the first is
 # built, but every listed package's tag is edited in the resulting commit. This
 # enables tagging e.g. O2 and O2Physics at the same time, with the same tag, and
+
+
+
 # building O2Physics (which pulls in O2 as well).
 main_pkg=${PACKAGES%% *}
 # Check for required variables
