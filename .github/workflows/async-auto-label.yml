@@ -15,8 +15,8 @@ jobs:
     name: Apply label
     runs-on: ubuntu-latest
     if: ${{ github.event.issue.pull_request &&
-            (startsWith('+label-async', github.event.comment.body) ||
-             startsWith('!+label-async', github.event.comment.body)) }}
+            (startsWith(github.event.comment.body, '+label-async-') ||
+             startsWith(github.event.comment.body, '!+label-async-')) }}
 
     steps:
       - name: Install prerequisites
