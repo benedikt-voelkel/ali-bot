@@ -53,7 +53,7 @@ jobs:
                 if review.state == 'APPROVED':
                     review.dismiss('Labels updated; please review again.')
 
-            possible_labels = {label.name: label for label in repo.get_labels()}
+            possible_labels = {label.name: label for label in repo.get_labels() if label.name.startswith('async-')}
             add_labels, invalid_labels = [], []
             for label_name in labels:
                 delete = label_name.startswith('!')
