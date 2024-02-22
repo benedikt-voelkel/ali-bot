@@ -1,0 +1,46 @@
+---
+name: Collect and print async labels
+
+'on':
+  pull_request:
+    types:
+      - opened
+      - reopened
+
+jobs:
+  collect_labels:
+    runs-on: ubuntu-latest
+    outputs:
+      labels: ${{ steps.get_labels.outputs.labels }}
+    steps:
+      - name: Get Labels
+        id: get_labels
+        run: |
+          labels=$(jq '.jobs[].labels | select(.!=null)' $GITHUB_EVENT_PATH | jq -r 'keys[] | select(startswith("async-"))')
+          echo "::set-output name=labels::$labels"
+
+  print_labels:
+    needs: collect_labels
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print Labels
+        run: |
+          echo "Labels:"
+          echo "${{ needs.collect_labels.outputs.labels }}"
+      - name: Add Comment to Issue
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { context, github } = require('@actions/github');
+            const labels = context.payload.workflow_run.outputs.labels;
+            const issueNumber = context.payload.issue.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const body = "The following async labels are available: ${labels.join('\n')}\nTo request adding or removing such labels, add a comment such as\n+async-label <async-label-1> <async-label2> !<async-label3>\nThe \"!\" marks a label to be removed.";
+            github.issues.createComment({
+              owner,
+              repo,
+              issue_number: issueNumber,
+              body
+            });
