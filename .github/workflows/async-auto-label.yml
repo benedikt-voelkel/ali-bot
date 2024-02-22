@@ -45,8 +45,10 @@ jobs:
             pattern = pattern = r'(!?\+label-async-\w+)'
             matches = re.findall(pattern, os.environ['comment'])
             assert matches, f'could not parse comment: {os.environ["comment"]!r}'
-            labels = [re.sub('^' + re.escape('+label-'), '', label.strip()) for label in matches]
-            labels.extend([re.sub('^' + re.escape('!+label-'), '!', label.strip()) for label in matches])
+            # labels to add, simply strip '+label-' from the beginning
+            labels = [re.sub('^' + re.escape('+label-'), '', label.strip()) for label in matches if not re.match(r'!', label)]
+            # labels to remove, replace '!+label-' at the beginning by '!' to signal the removal
+            labels.extend([re.sub('^' + re.escape('!+label-'), '!', label.strip()) for label in matches if re.match(r'!', label)])
 
             # Since changing the labels may change which branches this PR is
             # merged into, stay on the safe side and dismiss any approvals.
