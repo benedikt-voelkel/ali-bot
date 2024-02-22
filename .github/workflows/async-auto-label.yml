@@ -42,11 +42,11 @@ jobs:
           requester = os.environ['requester']
 
           def modify_labels():
-
-            match = re.match(r'\+label-async-\s+(.+)', os.environ['comment'])
-            assert match, f'could not parse comment: {os.environ["comment"]!r}'
-            labels = [re.sub('^' + re.escape('+label-'), '', label.strip()) for label in match.group(1).split(',')]
-            labels.extend([re.sub('^' + re.escape('!+label-'), '!', label.strip()) for label in match.group(1).split(',')])
+            pattern = pattern = r'(!?\+label-async-\w+)'
+            matches = re.findall(pattern, os.environ['comment'])
+            assert matches, f'could not parse comment: {os.environ["comment"]!r}'
+            labels = [re.sub('^' + re.escape('+label-'), '', label.strip()) for label in matches]
+            labels.extend([re.sub('^' + re.escape('!+label-'), '!', label.strip()) for label in matches])
 
             # Since changing the labels may change which branches this PR is
             # merged into, stay on the safe side and dismiss any approvals.
