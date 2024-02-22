@@ -19,3 +19,8 @@ class RuleDecisionTests(TestCase):
 if __name__ == '__main__':
   path.append(".")
   unittest.main()
+
+
+
+
+print('Hello')
