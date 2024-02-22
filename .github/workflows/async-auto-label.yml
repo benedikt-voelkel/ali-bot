@@ -28,7 +28,7 @@ jobs:
           comment: ${{ github.event.comment.body }}
           requester: ${{ github.event.comment.user.login }}
           repo: ${{ github.event.repository.full_name }}
-          pr: ${{ github.event.issue.pull_request.number }}
+          pr: ${{ github.event.issue.number }}
           token: ${{ github.token }}
           association: ${{ github.event.comment.author_association }}
         run: |
@@ -38,7 +38,7 @@ jobs:
 
           accepted_associations = ['COLLABORATOR', 'CONTRIBUTOR', 'MEMBER', 'OWNER']
           repo = github.Github(os.environ['token']).get_repo(os.environ['repo'])
-          pr = repo.get_pull(os.environ['pr'])
+          pr = repo.get_pull(int(os.environ['pr']))
           requester = os.environ['requester']
 
           def modify_labels():
