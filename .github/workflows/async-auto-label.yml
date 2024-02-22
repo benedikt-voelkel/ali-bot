@@ -15,8 +15,7 @@ jobs:
     name: Apply label
     runs-on: ubuntu-latest
     if: ${{ github.event.issue.pull_request &&
-            (startsWith(github.event.comment.body, '+label-async-') ||
-             startsWith(github.event.comment.body, '!+label-async-')) }}
+            startsWith('+async-label', github.event.comment.body) }}
 
     steps:
       - name: Install prerequisites
@@ -42,13 +41,9 @@ jobs:
           requester = os.environ['requester']
 
           def modify_labels():
-            pattern = pattern = r'(!?\+label-async-\w+)'
-            matches = re.findall(pattern, os.environ['comment'])
-            assert matches, f'could not parse comment: {os.environ["comment"]!r}'
-            # labels to add, simply strip '+label-' from the beginning
-            labels = [re.sub('^' + re.escape('+label-'), '', label.strip()) for label in matches if not re.match(r'!', label)]
-            # labels to remove, replace '!+label-' at the beginning by '!' to signal the removal
-            labels.extend([re.sub('^' + re.escape('!+label-'), '!', label.strip()) for label in matches if re.match(r'!', label)])
+            match = re.match(r'\+async-label\s+(.+)', os.environ['comment'])
+            assert match, f'could not parse comment: {os.environ["comment"]!r}'
+            labels = [label.strip() for label in match.group(1).split(',')]
 
             # Since changing the labels may change which branches this PR is
             # merged into, stay on the safe side and dismiss any approvals.
