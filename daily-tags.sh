@@ -59,6 +59,11 @@ git config --global user.name 'ALICE Builder'
 git config --global user.email alibuild@cern.ch
 
 # Set the default python and pip depending on the architecture...
+
+
+
+
+
 case $ARCHITECTURE in
   slc6*) PIP=pip PYTHON=python ;;
   *) PIP=pip3 PYTHON=python3 ;;
