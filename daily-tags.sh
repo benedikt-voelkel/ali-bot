@@ -86,6 +86,9 @@ if [ "$(date +%u)" = 1 ]; then   # On Mondays (for Sunday night builds)
   flpsuite_current=$flpsuite_latest
 fi
 
+
+
+
 ALIDIST_BRANCH=${ALIDIST_BRANCH//!!FLPSUITE_LATEST!!/$flpsuite_latest}
 ALIDIST_BRANCH=${ALIDIST_BRANCH//!!FLPSUITE_CURRENT!!/$flpsuite_current}
 if ! git clone -b "$ALIDIST_BRANCH" "https://github.com/$ALIDIST_REPO" alidist/; then
