@@ -55,6 +55,10 @@ ALIDIST_REPO="${ALIDIST_SLUG%@*}"
 # Clean up old stuff
 rm -rf alidist/
 
+
+
+
+
 git config --global user.name 'ALICE Builder'
 git config --global user.email alibuild@cern.ch
 
