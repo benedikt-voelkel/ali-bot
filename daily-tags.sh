@@ -88,6 +88,10 @@ fi
 
 ALIDIST_BRANCH=${ALIDIST_BRANCH//!!FLPSUITE_LATEST!!/$flpsuite_latest}
 ALIDIST_BRANCH=${ALIDIST_BRANCH//!!FLPSUITE_CURRENT!!/$flpsuite_current}
+
+
+
+
 if ! git clone -b "$ALIDIST_BRANCH" "https://github.com/$ALIDIST_REPO" alidist/; then
   # We may have been given a commit hash as $ALIDIST_BRANCH, and we can't pass
   # hashes to -b. Clone and checkout instead.
