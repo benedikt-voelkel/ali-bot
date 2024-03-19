@@ -2,7 +2,7 @@
 name: Create label for new async branch or tag
 
 'on':
-  workflow_call:
+  create:
 
 permissions:
   pull-requests: write   # to create labels, see https://docs.github.com/en/rest/issues/labels?apiVersion=2022-11-28#create-a-label
@@ -33,7 +33,7 @@ jobs:
           fi
           # extract only the branch or tag pattern we are really interested in
           ref="${ref##*/}"
-          gh label create "${ref}" --description "Concerns ${what_am_i} ${ref}" --color 95C6F0
+          gh label create --repo "${GITHUB_REPOSITORY}" "${ref}" --description "Concerns ${what_am_i} ${ref}" --color 95C6F0
           # create the corresponding "<label-name>-accepted" label
           ref_accepted="${ref}-accepted"
-          gh label create "${ref_accepted}" --description "Concerns ${what_am_i} ${ref}" --color 95C6F0
+          gh label create --repo "${GITHUB_REPOSITORY}" "${ref_accepted}" --description "Concerns ${what_am_i} ${ref}" --color 95C6F0
