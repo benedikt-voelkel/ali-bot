@@ -2,7 +2,7 @@
 name: Create label for new async branch or tag
 
 'on':
-  workflow_call:
+  create:
 
 permissions:
   pull-requests: write   # to create labels, see https://docs.github.com/en/rest/issues/labels?apiVersion=2022-11-28#create-a-label
